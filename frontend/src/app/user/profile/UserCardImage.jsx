@@ -1,8 +1,8 @@
 'use client'
-import { Card, Avatar, Text, Group, Button } from '@mantine/core';
+import { Card, Avatar, Text, Group, Button, Loader } from '@mantine/core';
 import classes from './UserCardImage.module.css';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // 1. Import useEffect
 
 const stats = [
     { value: '34K', label: 'Followers' },
@@ -11,8 +11,16 @@ const stats = [
 ];
 
 export function UserCardImage() {
+    // 2. Initialize state as null
+    const [currentUser, setCurrentUser] = useState(null);
 
-    const [currentUser, setCurrentUser] = useState(JSON.parse(sessionStorage.getItem('user')));
+    // 3. Use useEffect to safely access sessionStorage on the client-side
+    useEffect(() => {
+        const userJson = sessionStorage.getItem('user');
+        if (userJson) {
+            setCurrentUser(JSON.parse(userJson));
+        }
+    }, []); // Empty array means this runs only once
 
     const items = stats.map((stat) => (
         <div key={stat.label}>
@@ -25,6 +33,18 @@ export function UserCardImage() {
         </div>
     ));
 
+    // 4. Add a loading state to prevent errors while data is being fetched
+    if (!currentUser) {
+        return (
+            <Card withBorder padding="xl" radius="md" className={classes.card} h={400}>
+                <Group justify="center" mt="lg">
+                    <Loader color="blue" />
+                    <Text>Loading Profile...</Text>
+                </Group>
+            </Card>
+        );
+    }
+
     return (
         <Card withBorder padding="xl" radius="md" className={classes.card}>
             <Card.Section
@@ -33,7 +53,6 @@ export function UserCardImage() {
                     backgroundSize: 'cover',
                     backgroundImage:
                         'url(https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80)',
-                    // backgroundColor: 'cyan'
                 }}
             />
             <Avatar

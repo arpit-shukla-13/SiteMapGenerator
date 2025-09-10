@@ -1,25 +1,39 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import classes from './feedback.module.css';
-import { Container, Flex, Group, Rating, Textarea, Text, Button } from '@mantine/core'
+import { Container, Group, Rating, Textarea, Text, Button, Loader } from '@mantine/core'
 import { useFormik } from 'formik';
 import toast from 'react-hot-toast';
 
 const Feedback = () => {
 
     const [rating, setRating] = useState(4);
-    const [currentUser, setCurrentUser] = useState(JSON.parse(sessionStorage.getItem('user')));
+    // 1. Initialize currentUser as null
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // 2. Safely get user data from sessionStorage on the client-side
+    useEffect(() => {
+        const userJson = sessionStorage.getItem('user');
+        if (userJson) {
+            setCurrentUser(JSON.parse(userJson));
+        }
+    }, []);
 
     const feedbackForm = useFormik({
         initialValues: {
-            user: currentUser._id,
+            user: '', // Initialize with an empty string
             rating: '',
             feedback: ''
         },
         onSubmit: (values) => {
+            // 3. Add the user ID and rating just before submitting
             values.rating = rating;
+            values.user = currentUser._id;
+            
             console.log(values);
-            fetch('http://localhost:5500/feedback/add', {
+
+            // 4. Use the environment variable for the API URL
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/feedback/add`, {
                 method: 'POST',
                 body: JSON.stringify(values),
                 headers: {
@@ -30,20 +44,27 @@ const Feedback = () => {
                     console.log(response.status);
                     if (response.status === 200) {
                         toast.success('Feedback Submitted');
-                        response.json()
-                            .then((data) => {
-                                console.log(data);
-
-                            })
+                        // No need to process the response further unless you need the data
                     } else {
-                        console.log('Failed');
+                        toast.error('Submission Failed');
                     }
                 }).catch((err) => {
                     console.log(err);
+                    toast.error('An error occurred.');
                 })
 
         }
     })
+
+    // 5. Show a loading state until the user data is available
+    if (!currentUser) {
+        return (
+            <Container size='xs' mt={100} style={{ textAlign: 'center' }}>
+                <Loader />
+                <Text>Loading form...</Text>
+            </Container>
+        );
+    }
 
     return (
         <div>
@@ -65,4 +86,4 @@ const Feedback = () => {
     )
 }
 
-export default Feedback
+export default Feedback;
