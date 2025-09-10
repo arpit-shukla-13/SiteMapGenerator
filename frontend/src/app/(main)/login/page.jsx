@@ -115,7 +115,7 @@ const AuthenticationForm = (props) => {
 
               <Group justify="space-between" mt="xl">
                 <Anchor component={Link} type="button" c="dimmed" href={'/signup'} size="xs">
-                  Don't have an account? Register
+                  Do not have an account? Register
                 </Anchor>
                 <Button type="submit" color='indigo' radius="xl">
                   Login
