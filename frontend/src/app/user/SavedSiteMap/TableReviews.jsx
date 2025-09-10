@@ -1,41 +1,52 @@
 'use client'
-import { Table, Progress, Anchor, Text, Group, Button, Center } from '@mantine/core';
-import classes from './TableReviews.module.css';
-import { useParams } from 'next/navigation';
+import { Table, Progress, Anchor, Text, Group, Button, Center, Loader } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { json2xml } from 'xml-js';
 
 export function TableReviews() {
 
-    const [Data, setData] = useState([])
+    const [data, setData] = useState([]);
+    // 1. Initialize currentUser as null
+    const [currentUser, setCurrentUser] = useState(null);
 
-    const [currentUser, setCurrentUser] = useState(JSON.parse(sessionStorage.getItem('user')));
+    // 2. Safely load user data from sessionStorage on the client-side
+    useEffect(() => {
+        const userJson = sessionStorage.getItem('user');
+        if (userJson) {
+            setCurrentUser(JSON.parse(userJson));
+        }
+    }, []);
 
-    const fetchSitemapData = () => {
-        fetch('http://localhost:5500/sitemap/getbyuser/' + currentUser._id)
-            .then((response) => {
-                console.log(response);
-                response.json()
-                    .then(data => {
-                        console.log(data);
-                        setData(data)
-                    })
-            }).catch((err) => {
-                console.log(err);
-            });
-    }
+    // 3. Fetch sitemap data only AFTER currentUser has been loaded
+    useEffect(() => {
+        const fetchSitemapData = () => {
+            // 4. Use the environment variable for the API URL
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/sitemap/getbyuser/${currentUser._id}`)
+                .then((response) => response.json())
+                .then(data => {
+                    console.log(data);
+                    setData(data);
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        };
+        // Only run the fetch if currentUser is not null
+        if (currentUser) {
+            fetchSitemapData();
+        }
+    }, [currentUser]); // This useEffect hook runs whenever currentUser changes
 
     const loadSitemap = async (directory) => {
-        const res = await fetch(`http://localhost:5500/${directory}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${directory}`);
         const data = await res.json();
-        console.log(data);
         return JSON.stringify(data);
-    }
+    };
 
     const convertToXml = async (directory) => {
         const sitemapJSON = await loadSitemap(directory);
         if (!sitemapJSON) return '';
-        return json2xml(sitemapJSON, { compact: true, spaces: 4 })
+        return json2xml(sitemapJSON, { compact: true, spaces: 4 });
     };
 
     const downloadXML = async (sitemap) => {
@@ -48,28 +59,32 @@ export function TableReviews() {
     };
 
     const deleteSitemap = (id) => {
-        fetch('http://localhost:5500/sitemap/delete/' + id, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/sitemap/delete/${id}`, {
             method: 'DELETE',
         })
             .then((response) => {
-                return response.json();
-            })
-            .then((data) => {
-                console.log(data);
-                fetchSitemapData();
+                if(response.status === 200){
+                    // Refetch data by filtering it from the current state
+                    setData(currentData => currentData.filter(item => item._id !== id));
+                }
             })
             .catch((err) => {
                 console.log(err);
             });
     };
 
-    useEffect(() => {
-        fetchSitemapData()
-    }, [])
-
-    const displayDAta = Data.map((row) => {
+    // 5. Add a loading state for when user is not yet loaded
+    if (!currentUser) {
         return (
-            <Table.Tr key={row.title}>
+            <Center h={400}>
+                <Loader />
+            </Center>
+        );
+    }
+
+    const displayData = data.map((row) => {
+        return (
+            <Table.Tr key={row._id}>
                 <Table.Td>
                     {row.url}
                 </Table.Td>
@@ -82,7 +97,7 @@ export function TableReviews() {
                 <Table.Td>
                     <Group gap={15}>
                         <Button size='xs' color='red' onClick={() => { deleteSitemap(row._id) }}>Delete</Button>
-                        <Button size='xs' px={5} onClick={async () => { await downloadXML(row) }}>Download</Button>
+                        <Button size='xs' px={5} onClick={() => { downloadXML(row) }}>Download</Button>
                     </Group>
                 </Table.Td>
             </Table.Tr>
@@ -94,13 +109,13 @@ export function TableReviews() {
             <Table verticalSpacing='xl'>
                 <Table.Thead>
                     <Table.Tr fz={25} px='xl'>
-                        <Table.Th>SiteMap Title</Table.Th>
+                        <Table.Th>SiteMap URL</Table.Th>
                         <Table.Th>Date</Table.Th>
                         <Table.Th>File Name </Table.Th>
                         <Table.Th>Action</Table.Th>
                     </Table.Tr>
                 </Table.Thead>
-                <Table.Tbody>{displayDAta}</Table.Tbody>
+                <Table.Tbody>{displayData}</Table.Tbody>
             </Table>
         </Table.ScrollContainer>
     );
