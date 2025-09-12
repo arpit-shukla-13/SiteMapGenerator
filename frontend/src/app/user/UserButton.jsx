@@ -2,11 +2,25 @@
 import { UnstyledButton, Group, Avatar, Text, rem } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 import classes from './UserButton.module.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function UserButton() {
 
-    const [currentUser, setCurrentUser] = useState(JSON.parse(sessionStorage.getItem('user')));
+    // 1. Initialize currentUser as null
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // 2. Safely load user data from sessionStorage on the client-side
+    useEffect(() => {
+        const userJson = sessionStorage.getItem('user');
+        if (userJson) {
+            setCurrentUser(JSON.parse(userJson));
+        }
+    }, []);
+
+    // 3. Show a placeholder or nothing while loading
+    if (!currentUser) {
+        return null; // Or return a loading skeleton
+    }
 
     return (
         <UnstyledButton className={classes.user}>
