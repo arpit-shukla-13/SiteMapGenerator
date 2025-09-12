@@ -39,14 +39,13 @@ export function AuthenticationTitle() {
             console.log(values);
             // send values to backend
 
-            fetch('http://localhost:5500/user/add',
-                {
-                    method: 'POST', body: JSON.stringify(values),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            // THIS IS THE LINE WE FIXED
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/add`, {
+                method: 'POST', body: JSON.stringify(values),
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            )
+            })
                 .then((response) => {
                     console.log(response.status);
                     if (response.status === 200) {
