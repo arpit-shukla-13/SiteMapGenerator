@@ -45,7 +45,7 @@ const AuthenticationForm = (props) => {
 
   const handleLoginSubmit = (values) => {
     console.log(values);
-    fetch('http://localhost:5500/user/authenticate', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/authenticate`, {
       method: 'POST',
       body: JSON.stringify(values),
       headers: {
