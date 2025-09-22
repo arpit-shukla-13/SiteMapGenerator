@@ -20,6 +20,7 @@ const Home = () => {
             <FeaturesCards></FeaturesCards>
             <EmailBanner></EmailBanner>
             <StatsGroup></StatsGroup>
+            
             <FooterLinks></FooterLinks>
         </div>
     )
