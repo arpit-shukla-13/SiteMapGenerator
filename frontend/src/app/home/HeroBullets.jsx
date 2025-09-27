@@ -1,7 +1,6 @@
 'use client'
 import { Image, Container, Title, Button, Group, Text, List, ThemeIcon, rem } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
-// import image from '/image.svg';
 import classes from './HeroBullets.module.css';
 import Link from 'next/link';
 
